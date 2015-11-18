@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.vremenar.R;
-import com.vremenar.data.Mesto;
 
 import java.util.List;
 
@@ -16,9 +15,9 @@ import java.util.List;
  */
 public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder_mesto> {
 
-    private List<Mesto> lMesto;
+    private List<String> lMesto;
 
-    public adapter_mesto(List<Mesto> listMesto) {
+    public adapter_mesto(List<String> listMesto) {
         this.lMesto = listMesto;
     }
 
@@ -34,9 +33,9 @@ public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder
     @Override
     public void onBindViewHolder(viewHolder_mesto viewHolder_mesto, int i) {
 
-        Mesto tmp = lMesto.get(i);
+        String tmp = lMesto.get(i);
 
-        viewHolder_mesto.tvNaziv.setText(tmp.getNaziv());
+        viewHolder_mesto.tvNaziv.setText(tmp);
     }
 
     @Override
