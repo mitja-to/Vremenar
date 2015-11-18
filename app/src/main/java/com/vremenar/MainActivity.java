@@ -5,15 +5,20 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.vremenar.adapter.adapter_mesto;
 import com.vremenar.data.Mesto;
@@ -37,13 +42,18 @@ public class MainActivity extends Activity {
 
     SharedPrefs prefs;
     List<String> shranjenaMesta;
+    List<Mesto> objektiMesta;
+    MyApplication app;
     private RecyclerView rv;
     private ProgressDialog progDialog;
+    SwipeRefreshLayout srlOsvezi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        app = (MyApplication)getApplication();
 
         //RecyclerView kot korenski element seznama mest v katerega se dinamično nalaga en oz. več CardView-ov, ki predstavljajo posamezno mesto
         rv = (RecyclerView)findViewById(R.id.rvMesta);
@@ -61,6 +71,15 @@ public class MainActivity extends Activity {
         shranjenaMesta = prefs.getFavorites(getApplicationContext());
         if(shranjenaMesta != null)
         {
+            objektiMesta = new ArrayList<>();
+            for(String mesto : shranjenaMesta)
+            {
+                Mesto tmp = new Mesto();
+                tmp.setNaziv(mesto.toString());
+                objektiMesta.add(tmp);
+            }
+            adapter_mesto am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this);
+            rv.setAdapter(am);
             new LoadData().execute();
         }
         else
@@ -68,6 +87,16 @@ public class MainActivity extends Activity {
             //Sporočimo, da je seznam prazen
         }
 
+
+        srlOsvezi = (SwipeRefreshLayout)findViewById(R.id.swipe);
+        //srlOsvezi.setColorScheme(android.R.color.holo_blue_dark, android.R.color.holo_blue_light, android.R.color.holo_green_light, android.R.color.holo_green_light);
+        srlOsvezi.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                srlOsvezi.setRefreshing(true);
+                new LoadData().execute();
+            }
+        });
 
         //APP ID: bccacdc74257e84215c17306191c8ecb
 
@@ -82,6 +111,34 @@ public class MainActivity extends Activity {
                 startActivity(intent);
             }
         });
+
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                //Remove swiped item from list and notify the RecyclerView
+                TextView tvMesto = (TextView)findViewById(R.id.tvMesto);
+
+                vrniMesto(tvMesto.getText().toString());
+                objektiMesta.remove(app.ob_mesto);
+                prefs.removeFavorite(getApplicationContext(), app.ob_mesto.getNaziv());
+
+                CoordinatorLayout clMain = (CoordinatorLayout)findViewById(R.id.clMain);
+                Snackbar snackbar = Snackbar.make(clMain, "Mesto odstranjeno", Snackbar.LENGTH_LONG);
+                snackbar.show();
+
+                rv.invalidate();
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(rv);
+
     }
 
     @Override
@@ -90,6 +147,15 @@ public class MainActivity extends Activity {
         List<String> shranjenaMesta = prefs.getFavorites(getApplicationContext());
         if(shranjenaMesta != null)
         {
+            objektiMesta = new ArrayList<>();
+            for(String mesto : shranjenaMesta)
+            {
+                Mesto tmp = new Mesto();
+                tmp.setNaziv(mesto.toString());
+                objektiMesta.add(tmp);
+            }
+            adapter_mesto am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this);
+            rv.setAdapter(am);
             new LoadData().execute();
         }
     }
@@ -114,6 +180,20 @@ public class MainActivity extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void vrniMesto(String naziv)
+    {
+        Mesto tmp = new Mesto();
+        for(Mesto m : objektiMesta)
+        {
+            if(m.getNaziv().equals(naziv))
+            {
+                tmp = m;
+            }
+        }
+
+        app.ob_mesto = tmp;
     }
 
     class LoadData extends AsyncTask<String, String, String> {
@@ -215,32 +295,25 @@ public class MainActivity extends Activity {
             {
                 try {
 
+
                     JSONObject object = new JSONObject(lsJSONmesta.get(i));
 
                     JSONObject ObjektPod = object.getJSONObject("main");
-                    String temparatura = ObjektPod.getString("temp");
-                    String vlaga = ObjektPod.getString("humidity");
+                    objektiMesta.get(i).setTemparatura(ObjektPod.getString("temp"));
+                    objektiMesta.get(i).setVlaga(ObjektPod.getString("humidity"));
 
                     JSONArray PoljeOpis = object.getJSONArray("weather");
-
-                    String opis = PoljeOpis.getJSONObject(0).getString("description");
-
+                    objektiMesta.get(i).setOpis(PoljeOpis.getJSONObject(0).getString("description"));
 
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
 
-            List<Mesto> objektiMesta = new ArrayList<>();
-            for(String mesto : shranjenaMesta)
-            {
-                Mesto tmp = new Mesto();
-                tmp.setNaziv(mesto.toString());
-                objektiMesta.add(tmp);
-            }
-            adapter_mesto am = new adapter_mesto(objektiMesta);
+            adapter_mesto am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this);
             rv.setAdapter(am);
 
+            srlOsvezi.setRefreshing(false);
             progDialog.dismiss();
         }
     }
