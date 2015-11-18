@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.vremenar.R;
+import com.vremenar.data.Mesto;
 
 import java.util.List;
 
@@ -15,9 +16,9 @@ import java.util.List;
  */
 public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder_mesto> {
 
-    private List<String> lMesto;
+    private List<Mesto> lMesto;
 
-    public adapter_mesto(List<String> listMesto) {
+    public adapter_mesto(List<Mesto> listMesto) {
         this.lMesto = listMesto;
     }
 
@@ -33,9 +34,10 @@ public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder
     @Override
     public void onBindViewHolder(viewHolder_mesto viewHolder_mesto, int i) {
 
-        String tmp = lMesto.get(i);
+        //Iz dobljenega seznama vseh dodanih mest "lMesto" enega po enega nalagamo v ViewHolder ter vsakemu View-u posebej nastavljamo parametre Naziv ter temparaturo
+        Mesto tmp = lMesto.get(i);
 
-        viewHolder_mesto.tvNaziv.setText(tmp);
+        viewHolder_mesto.tvNaziv.setText(tmp.getNaziv());
     }
 
     @Override

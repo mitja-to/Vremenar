@@ -23,6 +23,9 @@ public class activity_dodaj extends Activity
         //Objekt za shared prefs, datoteko, ki vsebuje vsa trenutno dodana mesta
         prefs = new SharedPrefs();
 
+        //Edit text
+        etVnos = (EditText)findViewById(R.id.et_vnosMesta);
+
         //Gumb služi za potrditev vnosa naziva novega mesta
         AppCompatButton gumbPotrdi = (AppCompatButton)findViewById(R.id.gumb_potrdi);
         gumbPotrdi.setOnClickListener(new View.OnClickListener() {

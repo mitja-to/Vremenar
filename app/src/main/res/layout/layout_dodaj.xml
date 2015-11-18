@@ -13,7 +13,7 @@
         android:gravity="center">
 
         <EditText
-            android:id="@+id/editText1"
+            android:id="@+id/et_vnosMesta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center" />
