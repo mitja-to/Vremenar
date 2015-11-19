@@ -47,11 +47,12 @@ public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder
         Mesto tmp = lMesto.get(i);
 
         viewHolder_mesto.tvNaziv.setText(tmp.getNaziv());
-        viewHolder_mesto.tvTemparatura.setText(tmp.getTemparatura());
+        viewHolder_mesto.tvTemparatura.setText(tmp.getTemparatura() + " C");
     }
 
     @Override
     public int getItemCount() {
+
         return lMesto.size();
     }
 
