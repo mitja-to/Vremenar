@@ -17,12 +17,14 @@ import java.util.List;
 
 /**
  * Created by Mitja on 17. 11. 2015.
+ * Razred adapter_mesto služi kot adapter za prikaz posameznih elementov v seznamu mest ( v RecycleView-u)
+ * Poleg standardnih vhodnih parametrov vsebuje še Context ter objekt razreda MainActivity za dostop do funkcij razreda ter klicanje Intenta
  */
 public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder_mesto> {
 
-    private List<Mesto> lMesto;
-    Context context;
-    MainActivity actMain;
+    Context context;            //Lokalni objekt Context, se inicializira ob klicanju konstruktorja
+    MainActivity actMain;       //Lokalni objekt MainActivity, se inicializira ob klicanju konstruktorja
+    private List<Mesto> lMesto; //Seznam mest za generiranje elementov glavnega seznama v RecycleView-u
 
     public adapter_mesto(List<Mesto> listMesto, Context c, MainActivity act_Main) {
         this.lMesto = listMesto;
@@ -35,7 +37,6 @@ public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder
         View itemView = LayoutInflater.
                 from(viewGroup.getContext()).
                 inflate(R.layout.layout_element_seznama, viewGroup, false);
-
 
         return new viewHolder_mesto(itemView, context, actMain);
     }
@@ -68,8 +69,8 @@ public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder
             c = cnt;
             actMain = act_Main;
 
-            tvNaziv = (TextView)itemView.findViewById(R.id.tvMesto);
-            tvTemparatura = (TextView)itemView.findViewById(R.id.tvTemp);
+            tvNaziv = (TextView) itemView.findViewById(R.id.tvMesto);
+            tvTemparatura = (TextView) itemView.findViewById(R.id.tvTemp);
 
             itemView.setClickable(true);
             itemView.setOnClickListener(this);
@@ -79,7 +80,7 @@ public class adapter_mesto extends RecyclerView.Adapter<adapter_mesto.viewHolder
         public void onClick(View v) {
 
             //Intent z informacijo o izbranem elementu
-            TextView tvMesto = (TextView)v.findViewById(R.id.tvMesto);
+            TextView tvMesto = (TextView) v.findViewById(R.id.tvMesto);
 
             Intent intent = new Intent();
             //intent.putExtra("IzbranoMesto", tvMesto.getText().toString());

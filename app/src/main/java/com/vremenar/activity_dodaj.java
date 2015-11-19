@@ -14,8 +14,8 @@ import android.widget.EditText;
  */
 public class activity_dodaj extends Activity
 {
-    private EditText etVnos;
     SharedPrefs prefs;
+    private EditText etVnos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +49,9 @@ public class activity_dodaj extends Activity
         fabZapri.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onBackPressed();
+                Intent intent = new Intent();
+                intent.setClass(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
             }
         });
 

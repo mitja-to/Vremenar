@@ -40,10 +40,10 @@ import java.util.List;
 
 public class MainActivity extends Activity {
 
+    MyApplication app;                          //Objekt aplikacije, namenjen za dostopanje globalnih spremenljivk razreda "MyApplication"
     private SharedPrefs prefs;                  //Objekt razreda za obdelavo shranjenih mest preko funkcije SharedPreferences
     private List<String> shranjenaMesta;        //Seznam nazivov shranjenih mest
     private List<Mesto> objektiMesta;           //Seznam objektov mest, na začetku sestoji samo iz nazivov iz seznama "shranjenaMesta" nato se dopolni z podatki iz API-ja
-    MyApplication app;                          //Objekt aplikacije, namenjen za dostopanje globalnih spremenljivk razreda "MyApplication"
     private adapter_mesto am;                   //Objekt razreda "adapter_mesto", ki služi kot adapter za polnjenje glavnega seznama oz. RecyclerView-a
     private RecyclerView rv;                    //RecyclerView za prikaz elementov seznama
     private ProgressDialog progDialog;          //ProgressDialog za prikaz izvajanja funkcij v ozadju (ob prenosu informacij iz API-ja)
@@ -56,33 +56,25 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         //Pridobimo instanco razreda MyApplication
-        app = (MyApplication)getApplication();
+        app = (MyApplication) getApplication();
 
         //RecyclerView kot korenski element seznama mest v katerega se dinamično nalaga en oz. več CardView-ov, ki predstavljajo posamezno mesto
-        rv = (RecyclerView)findViewById(R.id.rvMesta);
+        rv = (RecyclerView) findViewById(R.id.rvMesta);
         LinearLayoutManager llmMesta = new LinearLayoutManager(this);
         llmMesta.setOrientation(LinearLayoutManager.VERTICAL);
         rv.setLayoutManager(llmMesta);
 
-        tvPrazno = (TextView)findViewById(R.id.empty_view);
+        tvPrazno = (TextView) findViewById(R.id.empty_view);
         tvPrazno.setEnabled(false); //Nastavimo na disabled, da nebi prišlo do proženja dogodkov ob klikanju na TextView za prikaz praznega seznama
+
+        //SwipeRefreshLayout za funkcionalnost osveževanja ob potegu navzdol
+        srlOsvezi = (SwipeRefreshLayout) findViewById(R.id.swipe);
 
         //Progress dialog za prikazovanje stanja nalaganja
         progDialog = new ProgressDialog(MainActivity.this, R.style.MyTheme);
         progDialog.setIndeterminate(false);
         progDialog.setProgressStyle(android.R.style.Widget_ProgressBar_Small);
         progDialog.setCancelable(false);
-
-        //Listener ob potegu tabele navzdol
-        srlOsvezi = (SwipeRefreshLayout)findViewById(R.id.swipe);
-        srlOsvezi.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                //Ob aktiviranju se prikaže vrteči se krogec skupaj z začetkom prenašanja novih podatkov
-                srlOsvezi.setRefreshing(true);
-                new LoadData().execute();
-            }
-        });
 
         //Initializiramo objekt za delo s shranjenimi mesti (SharedPrefs)
         prefs = new SharedPrefs();
@@ -95,39 +87,58 @@ public class MainActivity extends Activity {
         am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this);
         rv.setAdapter(am);
 
-        //Preverimo ali je seznam prikazanih mest prazen oz. so v njem elementi.
-        if(am.getItemCount() != 0)
+        //Preverimo ali imamo povezavo z internetom
+        if(app.isNetworkConnected())
         {
-            //V primeru, da ni prazen prikažemo RecyclerView ter omogočimo funkcijo Pull to refresh
-            rv.setEnabled(true);
-            rv.setVisibility(View.VISIBLE);
-            tvPrazno.setVisibility(View.GONE);
-            srlOsvezi.setEnabled(true);
+            //Preverimo ali je seznam prikazanih mest prazen oz. so v njem elementi.
+            if (am.getItemCount() != 0) {
+                //V primeru, da ni prazen prikažemo RecyclerView ter omogočimo funkcijo Pull to refresh
+                rv.setEnabled(true);
+                rv.setVisibility(View.VISIBLE);
+                tvPrazno.setVisibility(View.GONE);
+                srlOsvezi.setEnabled(true);
 
-            //Iz pridobljenih shranjenih mest ustvarimo isto število objektov razreda "Mesto", ter zgolj nastavimo nazive mest iz seznama shranjenih mest, da bomo kasneje lahko vsakemu posebej
-            //dodajali podatke o vremenu
-            for(String mesto : shranjenaMesta)
-            {
-                Mesto tmp = new Mesto();
-                tmp.setNaziv(mesto);
-                objektiMesta.add(tmp);
+                //Iz pridobljenih shranjenih mest ustvarimo isto število objektov razreda "Mesto", ter zgolj nastavimo nazive mest iz seznama shranjenih mest, da bomo kasneje lahko vsakemu posebej
+                //dodajali podatke o vremenu
+                for (String mesto : shranjenaMesta) {
+                    Mesto tmp = new Mesto();
+                    tmp.setNaziv(mesto);
+                    objektiMesta.add(tmp);
+                }
+
+                //Potem, ko imamo zbrana vsa mesta, pričnemo s prenosom informacij o vremenu za vsako mesto
+                new LoadData().execute();
+            } else {
+                //Seznam je prazen. Onemogočimo (skrijemo) RecyclerView ter prikažemo besedilo, ki opozarja na prazen seznam
+                rv.setEnabled(false);
+                rv.setVisibility(View.GONE);
+                tvPrazno.setVisibility(View.VISIBLE);
+                srlOsvezi.setEnabled(false);
             }
-
-            //Potem, ko imamo zbrana vsa mesta, pričnemo s prenosom informacij o vremenu za vsako mesto
-            new LoadData().execute();
         }
         else
         {
-            //Seznam je prazen. Onemogočimo (skrijemo) RecyclerView ter prikažemo besedilo, ki opozarja na prazen seznam
+            //Ni aktivne povezave z internetom, zato seznam skrijemo in prikažemo informacijo o neaktivnosti podatkovne povezave
             rv.setEnabled(false);
             rv.setVisibility(View.GONE);
+            tvPrazno.setText(R.string.s_offline);
             tvPrazno.setVisibility(View.VISIBLE);
-            srlOsvezi.setEnabled(false);
         }
+
+        //Listener ob potegu tabele navzdol
+
+        srlOsvezi.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                //Ob aktiviranju se prikaže vrteči se krogec skupaj z začetkom prenašanja novih podatkov ob predpostavki, da imamo aktivno povezavo
+                srlOsvezi.setRefreshing(true);
+                new LoadData().execute();
+            }
+        });
 
         //Floating action button oz. gumb za dodajanje novih mest, ki se nahaja na dnu seznama. Implementiran onClick listener, ki ob kliku
         //odpre nov activity za dodajanje mest (activity_dodaj.java)
-        FloatingActionButton FAB_dodaj = (FloatingActionButton)findViewById(R.id.FAB_dodaj);
+        FloatingActionButton FAB_dodaj = (FloatingActionButton) findViewById(R.id.FAB_dodaj);
         FAB_dodaj.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
@@ -149,19 +160,15 @@ public class MainActivity extends Activity {
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
 
-                //Zaznano je bilo drsanje zato ustrezno ukrepamo
-                //Najprej pridobimo informacijo katero mesto želi uporabnik izbrisati. Zato iz aktiviranega View-a pridobimo naziv mesta
-                TextView tvMesto = (TextView)findViewById(R.id.tvMesto);
+                //Zaznano je bilo drsanje zato ustrezno ukrepamo. ViewHolder hrani informacijo o indexu izbranega View-a pod "viewHolder.getAdapterPosition()"
+                //Mesto odstranimo iz datoteke shranjenih mest
+                prefs.removeFavorite(getApplicationContext(), objektiMesta.get(viewHolder.getAdapterPosition()).getNaziv());
 
-                //S pomočjo implementirane funkcije "vrniMesto(String)" iz naziva pridobimo celotni objekt izbranega mesta
-                vrniMesto(tvMesto.getText().toString());
-
-                //Izbrano mesto nato odstranimo iz seznama mest ter datoteke za shranjevanje
-                objektiMesta.remove(app.ob_mesto);
-                prefs.removeFavorite(getApplicationContext(), app.ob_mesto.getNaziv());
+                //Izbrano mesto nato odstranimo iz seznama mest
+                objektiMesta.remove(viewHolder.getAdapterPosition());
 
                 //Ob uspešni odstranitvi mesta prikažemo informacijo na SnackBar-u
-                CoordinatorLayout clMain = (CoordinatorLayout)findViewById(R.id.clMain);
+                CoordinatorLayout clMain = (CoordinatorLayout) findViewById(R.id.clMain);
                 Snackbar snackbar = Snackbar.make(clMain, "Mesto odstranjeno", Snackbar.LENGTH_LONG);
                 snackbar.show();
 
@@ -169,14 +176,11 @@ public class MainActivity extends Activity {
                 rv.invalidate();
 
                 //Preverimo, ali je nov seznam prazen oz. ima elemente. Če je prazen prikažemo informacijo o praznem seznamu, če ima elmenente pa le tega skrijemo ter prikažemo seznam
-                if(objektiMesta.size() == 0)
-                {
+                if (objektiMesta.size() == 0) {
                     rv.setEnabled(false);
                     rv.setVisibility(View.GONE);
                     tvPrazno.setVisibility(View.VISIBLE);
-                }
-                else
-                {
+                } else {
                     rv.setEnabled(true);
                     rv.setVisibility(View.VISIBLE);
                     tvPrazno.setVisibility(View.GONE);
@@ -196,38 +200,47 @@ public class MainActivity extends Activity {
 
         //Pridobimo sveži seznam shranjenih mest iz datoteke
         shranjenaMesta = prefs.getFavorites(getApplicationContext());
-        if(shranjenaMesta != null)
+
+        if(app.isNetworkConnected())
         {
-            ////V primeru, da ni prazen prikažemo RecyclerView ter omogočimo funkcijo Pull to refresh
-            rv.setEnabled(true);
-            rv.setVisibility(View.VISIBLE);
-            tvPrazno.setVisibility(View.GONE);
-            srlOsvezi.setEnabled(true);
+            if (shranjenaMesta != null) {
+                ////V primeru, da ni prazen prikažemo RecyclerView ter omogočimo funkcijo Pull to refresh
+                rv.setEnabled(true);
+                rv.setVisibility(View.VISIBLE);
+                tvPrazno.setVisibility(View.GONE);
+                srlOsvezi.setEnabled(true);
 
-            //Iz pridobljenih shranjenih mest ustvarimo isto število objektov razreda "Mesto", ter zgolj nastavimo nazive mest iz seznama shranjenih mest, da bomo kasneje lahko vsakemu posebej
-            //dodajali podatke o vremenu
-            objektiMesta = new ArrayList<>();
-            for(String mesto : shranjenaMesta)
-            {
-                Mesto tmp = new Mesto();
-                tmp.setNaziv(mesto);
-                objektiMesta.add(tmp);
+                //Iz pridobljenih shranjenih mest ustvarimo isto število objektov razreda "Mesto", ter zgolj nastavimo nazive mest iz seznama shranjenih mest, da bomo kasneje lahko vsakemu posebej
+                //dodajali podatke o vremenu
+                objektiMesta = new ArrayList<>();
+                for (String mesto : shranjenaMesta) {
+                    Mesto tmp = new Mesto();
+                    tmp.setNaziv(mesto);
+                    objektiMesta.add(tmp);
+                }
+
+                //Nastavimo adapterju nove podatke
+                adapter_mesto am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this);
+                rv.setAdapter(am);
+
+                //Osvežimo informacije o vremenu
+                new LoadData().execute();
+
+            } else {
+                //Seznam je prazen. Onemogočimo (skrijemo) RecyclerView ter prikažemo besedilo, ki opozarja na prazen seznam
+                rv.setEnabled(false);
+                rv.setVisibility(View.GONE);
+                tvPrazno.setVisibility(View.VISIBLE);
+                srlOsvezi.setEnabled(false);
             }
-
-            //Nastavimo adapterju nove podatke
-            adapter_mesto am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this);
-            rv.setAdapter(am);
-
-            //Osvežimo informacije o vremenu
-            new LoadData().execute();
         }
         else
         {
-            //Seznam je prazen. Onemogočimo (skrijemo) RecyclerView ter prikažemo besedilo, ki opozarja na prazen seznam
+            //Ni aktivne povezave z internetom, zato seznam skrijemo in prikažemo informacijo o neaktivnosti podatkovne povezave
             rv.setEnabled(false);
             rv.setVisibility(View.GONE);
+            tvPrazno.setText(R.string.s_offline);
             tvPrazno.setVisibility(View.VISIBLE);
-            srlOsvezi.setEnabled(false);
         }
     }
 
@@ -250,13 +263,10 @@ public class MainActivity extends Activity {
     }
 
     //Funkcija "vrniMesto(String)" kot vhodni parameter sprejme naziv mesta, nato poskuša podano mesto najti v seznamu objektov mest. Najdeni objekt nato nastavi kot globalno spremenljivko "ob_mesto"  v razredu "MyApplication"
-    public void vrniMesto(String naziv)
-    {
+    public void vrniMesto(String naziv) {
         Mesto tmp = new Mesto();
-        for(Mesto m : objektiMesta)
-        {
-            if(m.getNaziv().equals(naziv))
-            {
+        for (Mesto m : objektiMesta) {
+            if (m.getNaziv().equals(naziv)) {
                 tmp = m;
             }
         }
@@ -305,8 +315,7 @@ public class MainActivity extends Activity {
             try {
 
                 //Pomikamo se skozi seznam mest ter za vsako mesto prenesemo podatke iz API-ja
-                for(String sMesto : mesta)
-                {
+                for (String sMesto : mesta) {
                     //URL http://api.openweathermap.org/data/2.5/weather?q= + naziv mesta + &units=metric (prikaz v stopinje celzija) + &appid=bccacdc74257e84215c17306191c8ecb (ključ aplikaicje)
                     URL url = new URL("http://api.openweathermap.org/data/2.5/weather?q=" + sMesto + "&units=metric&appid=bccacdc74257e84215c17306191c8ecb");
 
@@ -372,8 +381,7 @@ public class MainActivity extends Activity {
             super.onPostExecute(unused);
 
             //Pomikamo se skozi seznam pridobljenih JSON nizov
-            for(int i=0; i<lsJSONmesta.size(); i++)
-            {
+            for (int i = 0; i < lsJSONmesta.size(); i++) {
                 try {
                     //Celotni niz shranimo kot JSONObject za nadaljno obdelavo
                     JSONObject object = new JSONObject(lsJSONmesta.get(i));

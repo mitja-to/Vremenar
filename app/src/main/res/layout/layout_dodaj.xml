@@ -11,12 +11,13 @@
         android:id="@+id/FAB_zapri"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_gravity="right"
-        android:layout_marginTop="15dp"
+        android:layout_gravity="end"
+        android:layout_marginEnd="2dp"
         android:layout_marginRight="2dp"
-        app:backgroundTint="#F21F2A"
+        android:layout_marginTop="15dp"
         android:elevation="0dp"
-        android:src="@mipmap/ic_action_cancel"/>
+        android:src="@mipmap/ic_action_cancel"
+        app:backgroundTint="#F21F2A" />
 
     <android.support.design.widget.TextInputLayout
         android:layout_width="fill_parent"
@@ -29,10 +30,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:hint="Ime mesta"
-            android:singleLine="true"
+            android:hint="@string/s_imeMesta"
+            android:inputType="textCapSentences"
             android:lines="1"
-            android:inputType="textCapSentences"/>
+            android:singleLine="true" />
 
     </android.support.design.widget.TextInputLayout>
 
@@ -42,8 +43,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
         android:layout_marginTop="24dp"
+        android:background="#ddd"
         android:gravity="center"
         android:padding="12dp"
-        android:background="#ddd"
-        android:text="Potrdi" />
+        android:text="@string/s_potrdi" />
 </LinearLayout>

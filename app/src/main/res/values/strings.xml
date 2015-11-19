@@ -3,4 +3,10 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="s_prazenSeznam">Ni podatkov, najprej z klikom na zeleni gumb dodaj mesto!</string>
+    <string name="s_imeMesta">Ime mesta</string>
+    <string name="s_potrdi">Potrdi</string>
+    <string name="s_temp">Temperatura</string>
+    <string name="s_vlaga">Vlaga</string>
+    <string name="s_offline">Ni povezave z omrežjem!</string>
 </resources>
