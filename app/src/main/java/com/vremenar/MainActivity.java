@@ -1,6 +1,5 @@
 package com.vremenar;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -9,6 +8,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
@@ -38,7 +38,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
     MyApplication app;                          //Objekt aplikacije, namenjen za dostopanje globalnih spremenljivk razreda "MyApplication"
     private SharedPrefs prefs;                  //Objekt razreda za obdelavo shranjenih mest preko funkcije SharedPreferences
@@ -54,6 +54,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getSupportActionBar().show();
 
         //Pridobimo instanco razreda MyApplication
         app = (MyApplication) getApplication();
@@ -173,7 +175,9 @@ public class MainActivity extends Activity {
                 snackbar.show();
 
                 //Ob zaključku osvežimo seznam mest
-                rv.invalidate();
+                //Nastavimo adapterju nove podatke
+                adapter_mesto am = new adapter_mesto(objektiMesta, getApplicationContext(), MainActivity.this); //TO-DO nova verzija  -  odstranjena napaka ob odstranitvi elementa se sedaj ui posodobi!
+                rv.setAdapter(am);
 
                 //Preverimo, ali je nov seznam prazen oz. ima elemente. Če je prazen prikažemo informacijo o praznem seznamu, če ima elmenente pa le tega skrijemo ter prikažemo seznam
                 if (objektiMesta.size() == 0) {
@@ -248,6 +252,8 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem item = menu.findItem(R.id.action_cart);
+        item.setVisible(false);
         return true;
     }
 

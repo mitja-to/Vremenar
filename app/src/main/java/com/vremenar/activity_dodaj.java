@@ -1,18 +1,19 @@
 package com.vremenar;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.EditText;
+import android.widget.Toast;
 
 /**
  * Created by Mitja on 17. 11. 2015.
  */
-public class activity_dodaj extends Activity
+public class activity_dodaj extends AppCompatActivity
 {
     SharedPrefs prefs;
     private EditText etVnos;
@@ -20,8 +21,10 @@ public class activity_dodaj extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.layout_dodaj);
+
+        //TO-DO odstranjena napaka - dodan actionbar
+        getSupportActionBar().show();
 
         //Objekt za shared prefs, datoteko, ki vsebuje vsa trenutno dodana mesta
         prefs = new SharedPrefs();
@@ -35,25 +38,36 @@ public class activity_dodaj extends Activity
             @Override
             public void onClick(View v) {
 
-                //Ob kliku na gumb za dodajanje mesta se vneseno mesto najprej shrani v shared prefs datoteko
-                prefs.addFavorite(getApplicationContext(), etVnos.getText().toString());
+                if(etVnos.getText().toString().trim().length() == 0 )
+                {
+                    Toast.makeText(getApplicationContext(), "Vnesite ime mesta!", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    //Ob kliku na gumb za dodajanje mesta se vneseno mesto najprej shrani v shared prefs datoteko
+                    prefs.addFavorite(getApplicationContext(), etVnos.getText().toString());
 
-                //Zatem, ko uspešno vnesemo novo mesto se vrnemo nazaj na prvi activity (MainActivity)
-                Intent intent = new Intent();
-                intent.setClass(getApplicationContext(), MainActivity.class);
-                startActivity(intent);
+                    //Zatem, ko uspešno vnesemo novo mesto se vrnemo nazaj na prvi activity (MainActivity)
+                    Intent intent = new Intent();
+                    intent.setClass(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                }
             }
         });
+    }
 
-        FloatingActionButton fabZapri = (FloatingActionButton)findViewById(R.id.FAB_zapri);
-        fabZapri.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem item = menu.findItem(R.id.action_cart);
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
-            public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setClass(getApplicationContext(), MainActivity.class);
-                startActivity(intent);
+            public boolean onMenuItemClick(MenuItem item) {
+                finish();
+                return false;
             }
         });
-
+        return true;
     }
 }
